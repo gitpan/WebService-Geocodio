@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package WebService::Geocodio::Location;
-$WebService::Geocodio::Location::VERSION = '0.01';
+$WebService::Geocodio::Location::VERSION = '0.02';
 use Moo;
 use Carp qw(confess);
 
@@ -73,7 +73,7 @@ WebService::Geocodio::Location - Location object for use with Geocod.io service.
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 ATTRIBUTES
 

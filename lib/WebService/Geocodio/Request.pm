@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package WebService::Geocodio::Request;
-$WebService::Geocodio::Request::VERSION = '0.01';
+$WebService::Geocodio::Request::VERSION = '0.02';
 use Moo::Role;
 use HTTP::Tiny;
 use JSON;
@@ -65,7 +65,7 @@ WebService::Geocodio::Request - A request role for Geocod.io
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 ATTRIBUTES
 

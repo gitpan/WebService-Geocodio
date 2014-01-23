@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package WebService::Geocodio;
-$WebService::Geocodio::VERSION = '0.01';
+$WebService::Geocodio::VERSION = '0.02';
 use Moo;
 use Carp qw(confess);
 with('WebService::Geocodio::Request');
@@ -67,7 +67,7 @@ WebService::Geocodio - A Perl interface to Geocod.io
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
