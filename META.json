@@ -4,7 +4,7 @@
       "Mark Allen <mrallen1@yahoo.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 5.012, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132661",
    "license" : [
       "perl_5"
    ],
@@ -22,7 +22,7 @@
       "runtime" : {
          "requires" : {
             "JSON" : "2.90",
-            "Moo" : "1.004002",
+            "Moo::Lax" : "0.15",
             "perl" : "5.014"
          }
       }
@@ -40,6 +40,6 @@
          "web" : "https://github.com/mrallen1/WebService-Geocodio"
       }
    },
-   "version" : "0.02"
+   "version" : "0.03"
 }
 

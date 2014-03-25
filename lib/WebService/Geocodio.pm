@@ -2,9 +2,13 @@ use strict;
 use warnings;
 
 package WebService::Geocodio;
-$WebService::Geocodio::VERSION = '0.02';
-use Moo;
+{
+  $WebService::Geocodio::VERSION = '0.03';
+}
+
+use Moo::Lax;
 use Carp qw(confess);
+use Scalar::Util qw(blessed);
 with('WebService::Geocodio::Request');
 
 # ABSTRACT: A Perl interface to Geocod.io
@@ -20,6 +24,13 @@ has 'api_key' => (
 
 has 'locations' => (
     is => 'rw',
+    default => sub { [] },
+);
+
+
+has 'fields' => (
+    is => 'rw',
+    predicate => 1,
     default => sub { [] },
 );
 
@@ -45,14 +56,46 @@ sub clear_locations {
 }
 
 
+sub add_field {
+    my $self = shift;
+
+    push @{ $self->fields }, grep { /cd|cd113|stateleg|timezone|school/ } @_;
+}
+
+
 sub geocode {
     my $self = shift;
 
+    $self->add_location(@_) if scalar @_;
+
     return undef if scalar @{$self->locations} < 1;
 
-    my @r = $self->send($self->locations);
+    my @r = $self->send_forward( $self->_format('forward') );
 
     wantarray ? return @r : return \@r;
+}
+
+
+sub reverse_geocode {
+    my $self = shift;
+
+    $self->add_location(@_) if scalar @_;
+
+    return undef if scalar @{$self->locations} < 1;
+
+    my @r = $self->send_reverse( $self->_format('reverse') );
+
+    wantarray ? return @r : return \@r;
+}
+
+sub _format {
+    my $self = shift;
+    my $direction = shift;
+
+    my $method = $direction eq 'forward' ? '_forward_formatting' 
+        : '_reverse_formatting';
+
+    return [ map {; blessed $_ ? $_->$method : $_ } @{$self->locations} ];
 }
 
 1;
@@ -67,7 +110,7 @@ WebService::Geocodio - A Perl interface to Geocod.io
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
@@ -82,7 +125,8 @@ version 0.02
     # Wrigley Field
     my $loc = WebService::Geocodio::Location->new(
         number => 1060,
-        street => 'W Addison',
+        postdirection => 'W',
+        street => 'Addison',
         suffix => 'Street',
         city => 'Chicago',
         state => 'IL',
@@ -101,18 +145,18 @@ version 0.02
 
 =head1 OVERVIEW
 
-This module is a fairly thin wrapper around the L<Geocod.io|http://geocod.io> geocoding web service.
-This service currently only supports US based addresses and "forward" geocoding where you have a postal
-address and want to convert to latitude/longitude pair.  The library is somewhat finicky about 
-how addresses are presented and stored; please read the API documentation thoroughly to make sure
-you're getting the best quality results from the service.
+This module is a fairly thin wrapper around the L<Geocod.io|http://geocod.io>
+geocoding web service.  This service currently only supports US based addresses
+at the moment.  Both forward and reverse geocoding is supported. 
 
-More countries and reverse geocoding (lat/lng -> postal address) are planned for future releases.
+In my testing, the service is somewhat finicky about how addresses are
+presented and stored; please read the service API documentation thoroughly 
+to make sure you're getting the best quality results from the service.
 
 You will need to obtain a free API key to use this library.
 
-All errors are fatal and reported by confess.  If you want more graceful error handling, you might
-want to try using L<Try::Tiny>.
+All errors are fatal and reported by C<confess>.  If you want more graceful
+error handling, you might want to try using L<Try::Tiny>.
 
 =head1 ATTRIBUTES
 
@@ -125,6 +169,37 @@ This is the geocod.io API key. It is required.
 The list of locations you want to geocode.  These can be bare strings (if you like) or
 you can use a fancy object like L<WebService::Geocodio::Location> which will serialize
 itself to JSON automatically.
+
+=head2 fields
+
+You may request the following fields be included in the results:
+
+=over 4
+
+=item * cd
+
+Congressional District (for the current Congress)
+
+=item * cd113
+
+Congressional District (for the 113th Congress which runs through 2015)
+
+=item * stateleg
+
+The state legislative divisions for this location. The results include both
+House and Senate, unless the location is unicameral like Nebraska or Washington
+D.C., then only a senate result is given.
+
+=item * timezone
+
+The timezone of this location, UTC offset and whether it observes daylight
+saving time.
+
+=item * school
+
+The unified or elementary/secondary school district identifiers for this location.
+
+=back
 
 =head1 METHODS
 
@@ -140,15 +215,45 @@ Show the locations currently set for geocoding.
 
 If you want to clear the current list of locations, use this method.
 
+=head2 add_field
+
+This method takes one or more fields to include in a result set. Valid fields are:
+
+=over 4
+
+=item * cd
+
+=item * cd113
+
+=item * stateleg
+
+=item * timezone
+
+=item * school
+
+=back
+
+Fields that do not match these valid names are silently discarded. 
+
 =head2 geocode
 
 Send the current list of locations to the geocod.io service.
 
 Returns undef if there are no locations stored.
 
-In a list context, returns a list of L<WebService::Geocodio::Location> objects.  In a scalar context,
-returns an arrayref of L<WebService::Geocodio::Location> objects. The list of objects is presented
-in descending order of accuracy.
+In a list context, returns a list of L<WebService::Geocodio::Location> objects.
+In a scalar context, returns an arrayref of L<WebService::Geocodio::Location>
+objects. The list of objects is presented in descending order of accuracy.
+
+=head2 reverse_geocode
+
+Send the current list of latitude, longitude pairs to the geocod.io service.
+
+Returns undef if there are no locations stored.
+
+In a list context, returns a list of L<WebService::Geocodio::Location> objects.
+In scalar context, returns an arrayref of L<WebService::Geocodio::Location> 
+objects.  The list of objects is presented in descending order of accuracy.
 
 =head1 AUTHOR
 

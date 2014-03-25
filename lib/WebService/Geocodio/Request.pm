@@ -2,28 +2,25 @@ use strict;
 use warnings;
 
 package WebService::Geocodio::Request;
-$WebService::Geocodio::Request::VERSION = '0.02';
+{
+  $WebService::Geocodio::Request::VERSION = '0.03';
+}
+
 use Moo::Role;
 use HTTP::Tiny;
-use JSON;
 use Carp qw(confess);
 use WebService::Geocodio::Location;
 
+with 'WebService::Geocodio::JSON';
+
 # ABSTRACT: A request role for Geocod.io
-
-
-has 'json' => (
-    is => 'ro',
-    lazy => 1,
-    default => sub { JSON->new()->allow_blessed->convert_blessed },
-);
 
 
 has 'ua' => (
     is => 'ro',
     lazy => 1,
     default => sub { HTTP::Tiny->new(
-        agent => 'WebService-Geocodio ',
+        agent => "WebService-Geocodio ",
         default_headers => { 'Content-Type' => 'application/json' },
     ) },
 );
@@ -32,26 +29,50 @@ has 'ua' => (
 has 'base_url' => (
     is => 'ro',
     lazy => 1,
-    default => sub { 'http://api.geocod.io/v1/geocode' },
+    default => sub { 'http://api.geocod.io/v1/' },
 );
 
 
-sub send {
+sub send_forward {
     my $self = shift;
 
-    my $data = $self->json->encode(shift);
+    $self->_request('geocode', $self->encode(@_));
+}
 
-    my $response = $self->ua->request('POST', $self->base_url . "?api_key=" . $self->api_key, { content => $data });
+
+sub send_reverse {
+    my $self = shift;
+
+    $self->_request('reverse', $self->encode(@_));
+}
+
+sub _request {
+    my ($self, $op, $content) = @_;
+
+    my $url;
+    if ( $self->has_fields ) {
+        $url = $self->base_url 
+            . "$op?fields=" . join(',', @{ $self->fields }) 
+            .  "&api_key=" . $self->api_key
+            ;
+    }
+    else {
+        $url = $self->base_url . "$op?api_key=" . $self->api_key;
+    }
+
+    my $response = $self->ua->request('POST', $url, { content => $content });
 
     if ( $response->{success} ) {
-        my $hr = $self->json->decode($response->{content});
+        my $hr = $self->decode($response->{content});
         return map { WebService::Geocodio::Location->new($_) } 
             map {; @{$_->{response}->{results}} } @{$hr->{results}};
     }
     else {
-        confess "Request to " . $self->base_url . " failed: (" . $response->{status} . ") - " . $response->{content};
+        confess "Request to " . $self->base_url . "$op failed: (" . 
+            $response->{status} . ") - " . $response->{content};
     }
 }
+
 
 1;
 
@@ -65,17 +86,13 @@ WebService::Geocodio::Request - A request role for Geocod.io
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 ATTRIBUTES
 
-=head2 json
-
-A JSON serializer/deserializer object. Default is JSON.
-
 =head2 ua
 
-A user agent object. Default is HTTP::Tiny
+A user agent object. Default is L<HTTP::Tiny>
 
 =head2 base_url
 
@@ -83,10 +100,19 @@ The base url to use when connecting to the service. Default is 'http://api.geoco
 
 =head1 METHODS
 
-=head2 send
+=head2 send_forward
 
-This method sends an arrayref of data to the service for processing.  If the web call is
-successful, returns an array of L<WebService::Geocodio::Location> objects.
+This method POSTs an arrayref of data to the service for processing.  If the
+web call is successful, returns an array of L<WebService::Geocodio::Location>
+objects.
+
+Any API errors are fatal and reported by C<Carp::confess>.
+
+=head2 send_reverse
+
+This method POSTs an arrayref of data to the service for processing.  If the
+web call is successful, returns an array of L<WebService::Geocodio::Location>
+objects.
 
 Any API errors are fatal and reported by C<Carp::confess>.
 
