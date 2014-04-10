@@ -20,4 +20,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=WebService-Geocodio
   homepage: https://metacpan.org/dist/WebService-Geocodio
   repository: git://github.com/mrallen1/WebService-Geocodio.git
-version: 0.03
+version: 0.04

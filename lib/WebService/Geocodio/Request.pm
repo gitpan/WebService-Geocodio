@@ -3,7 +3,7 @@ use warnings;
 
 package WebService::Geocodio::Request;
 {
-  $WebService::Geocodio::Request::VERSION = '0.03';
+  $WebService::Geocodio::Request::VERSION = '0.04';
 }
 
 use Moo::Role;
@@ -86,7 +86,7 @@ WebService::Geocodio::Request - A request role for Geocod.io
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 ATTRIBUTES
 
